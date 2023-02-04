@@ -571,8 +571,8 @@
           resident_ = resident_.sort(()=> 0.5 - Math.random());
           parking_ = parking_.sort((a,b)=> parseInt(a.block.replace(/[^0-9]/ig,'')) - parseInt(b.block.replace(/[^0-9]/ig,'')));
          
-          const getTwoNum = (pk,rd)=>{ const pk_ = pk.filter(r=>r.grids !== ''); let n = 0; for(var p = 0 ; p < pk_.length ;p++){ const gri = pk_.find(r=>r.block == pk_[p].block); var g = gri.grids == '' ? [] : gri.grids.split(','); if(g.length !== 0 ){ var fil = rd.filter(s=>s.ambitions.includes(pk[p].block) && s.lattice_num == '' ); if(fil.length !== 0){ for(let i=0 ; i< g.length ;i++){ if (fil.length !== 0){ n += (500*i)*p; } } } }; n +=1000 * p ;}; return n; }
-          let twoNum = getTwoNum(parking_,resident_);
+          const getTwoNum = (ty)=>{ return ty ? resident_.filter((r, i, a) => a.findIndex(s => r.phone === s.phone ) === i).length :resident_.filter(r=>r.lattice_num === '').length ; }
+          let twoNum = getTwoNum(true);
           let ambition_num = 8;
 
           const runCode = (ty)=>{
@@ -580,13 +580,15 @@
             
             var tp = [
               { type:'one', controller: resident_.filter((r, i, a) =>a.findIndex(s => r.phone === s.phone ) === i) },
-              { type:'two', controller: resident_.filter((r, i, a) =>r.lattice_num ==='' ) },
+              { type:'two', controller: resident_.filter((r) =>r.lattice_num ==='' ) },
               { type:'three', controller: resident_.filter(r=>r.lattice_num === '') }
             ]
 
             var p = parking_.filter(r=>r.grids !== ''); //車位判斷
             var num_ = 8;
             var li = 0;
+
+            console.log(ty,tp.find(r=>r.type === ty).controller.length)
 
             if(p.length !== 0){ // 
               for(var p_ = 0 ; p_ < p.length ;p_++){ //車位迴圈
@@ -596,13 +598,14 @@
                 var gr = g;
                 var gred = [];
                 var a_ = 0;
+
                 if(g.length !== 0){
                   while (a_ < a.length){
                     var am = a[a_].ambitions == '' ? [] : a[a_].ambitions.split(','); //未登記 意願
                     var tu = 0;
-                    if (am.length !== 0 && g.length !== 0){
+                    if (am.length !== 0 && g.length !== 0 ){
                       for(var i = 0 ; i < num_; i++ ){ //意願迴圈
-                        tu = b === am[i] ? tu+=1 : 0;
+                        tu = (b === am[i] || ty === 'three') ? ( ty === 'three' ? 1:tu+=1) : 0;
                         if(tu === i+1){
                           li ++;
                           gred = [...gred,a[a_].DT_RowId];
@@ -621,7 +624,7 @@
                           gr = gr.filter(r => r !== g[0] );
                           g = gr
                           parking_ = [...fs,{...fi,grids: aj(gr), grideds: aj(gred),grids_:String(gr.length)}];
-                          // console.log(ty,li,`${a_+1}/${i+1}`,b,g[i],ri.phone,am,g.length,gred.length)
+                          // console.log(ty,li,`${a_+1}/${i+1}`,b,ri.lattice_num,ri.phone,am,g.length,gred.length)
                           localStorage.setItem('residentData',JSON.stringify(resident_));
                           localStorage.setItem('parkingData',JSON.stringify(parking_));
                           HomeBody_Code();
@@ -639,7 +642,7 @@
 
           runCode('one');
           runCode('two');
-          runCode('three');         
+          runCode('three');
 
           // 排序
           var an = resident_.filter(r=>r.lattice_num !== '');
@@ -657,10 +660,8 @@
 
           localStorage.setItem('residentData',JSON.stringify(resident_));
           localStorage.setItem('parkingData',JSON.stringify(parking_));
-
           $('.startSmoke_start').attr('disabled', false);
           HomeBody_Code_.startBtn = '下載結果';
-
           toastr.info('已完成抽籤程序 可以下載啦!!!','系統提醒!!!');
 
         }else{
