@@ -458,26 +458,48 @@
             // (B2) READ CELLS IN ARRAY
 
             var data = [];
+            var ch = { resident:[0,1,2,6], parking:[0,1,2] };
+
             var ty = { resident:[ {id:'tobe'}, {id:'name'}, {id:'phone'}, {id:'license'}, {id:'card_num'}, {id:'lattice_num'}, {id:'ambitions'} ], parking:[ {id:'block'}, {id:'floor'}, {id:'grids'} ] };
             for (let row =range.s.r+1; row<=range.e.r; row++) {
               let i = data.length;
-              data.push({});
-              const aj = (a)=>{var l = ''; if(a != ''){ for(var i = 0 ;i < a.length;i++){l += `${a[i]}${(i+1) == a.length ? '' :','}`}; } return l;}
-              for (let col=range.s.c; col<=range.e.c; col++) {
-                let cell = worksheet[XLSX.utils.encode_cell({r:row, c:col})];
-                data[i][sheet=='住戶名單'? ty.resident[col].id : ty.parking[col].id] = String(cell == undefined ? '': cell.v);
+              var ch_s = true;
+              const ch_ = ()=>{
+                for (let col_=range.s.c; col_<=range.e.c; col_++) {
+                  if(sheet=='住戶名單'){
+                    if(ch.resident.includes(col_)){
+                      let cell = worksheet[XLSX.utils.encode_cell({r:row, c:col_})];
+                      ch_s = ch_s ? (String(cell == undefined ? '': cell.v) === '' ? false:true):false
+                    }
+                  }else{
+                    if(ch.parking.includes(col_)){
+                      let cell = worksheet[XLSX.utils.encode_cell({r:row, c:col_})];
+                      ch_s = ch_s ? (String(cell == undefined ? '': cell.v) === '' ? false:true):false
+                    }
+                  }
+                }
+                return ch_s;
               }
-              if(sheet=='車位資訊'){
-                data[i]['grideds'] = '';
-                data[i]['grids_'] = data[i]['grids'] == '' ? '0' : String([...new Set(data[i]['grids'].split(','))].length);
-                data[i]['grids'] = data[i]['grids'] == '' ? '' : aj([...new Set(data[i]['grids'].split(','))])
-              };
-              if(sheet=='住戶名單'){
-                data[i]['lattice_num']='';
-                data[i]['lattice_num_'] = '';
-                data[i]['ambitions'] = data[i]['ambitions'] == '' ? '' : aj([...new Set(data[i]['ambitions'].split(','))])
-              };
-              data[i]['DT_RowId']= NewItemID();
+
+              if(ch_()){
+                data.push({});
+                const aj = (a)=>{var l = ''; if(a != ''){ for(var i = 0 ;i < a.length;i++){l += `${a[i]}${(i+1) == a.length ? '' :','}`}; } return l;}
+                for (let col=range.s.c; col<=range.e.c; col++) {
+                  let cell = worksheet[XLSX.utils.encode_cell({r:row, c:col})];
+                  data[i][sheet=='住戶名單'? ty.resident[col].id : ty.parking[col].id] = String(cell == undefined ? '': cell.v);
+                }
+                if(sheet=='車位資訊'){
+                  data[i]['grideds'] = '';
+                  data[i]['grids_'] = data[i]['grids'] == '' ? '0' : String([...data[i]['grids'].split(',')].length);
+                  data[i]['grids'] = data[i]['grids'] == '' ? '' : aj([...data[i]['grids'].split(',')])
+                };
+                if(sheet=='住戶名單'){
+                  data[i]['lattice_num']='';
+                  data[i]['lattice_num_'] = '';
+                  data[i]['ambitions'] = data[i]['ambitions'] == '' ? '' : aj([...data[i]['ambitions'].split(',')])
+                };
+                data[i]['DT_RowId']= NewItemID();
+              }
             }
             return data
           }
